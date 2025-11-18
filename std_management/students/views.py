@@ -5,12 +5,32 @@ from .models import Student
 from django.contrib.auth.decorators import login_required
 from .forms import StudentForm
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from django.core.paginator import Paginator
 
 
 @login_required
 def student_list(request):
-    students = Student.objects.all().order_by('-created_at')
-    return render(request, 'students/students_list.html', {'students': students})
+    query = request.GET.get('q')
+    if query:
+        students = Student.objects.filter(
+            Q(name__icontains = query)|
+            Q(roll_number__icontains = query)|
+            Q(branch__icontains = query)|
+            Q(email__icontains = query)
+        ).order_by('-created_at')
+    else:
+        students = Student.objects.all().order_by('-created_at')
+
+    paginator = Paginator(students, 2)  # 2 students per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        'students/students_list.html',
+        {'page_obj': page_obj, 'query': query}
+    )
 
 @login_required 
 def add_student(request):

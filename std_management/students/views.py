@@ -11,6 +11,9 @@ from django.core.paginator import Paginator
 
 @login_required
 def student_list(request):
+    # Check if user is principal
+    is_principal = request.user.is_superuser
+    # search
     query = request.GET.get('q')
     if query:
         students = Student.objects.filter(
@@ -21,7 +24,7 @@ def student_list(request):
         ).order_by('-created_at')
     else:
         students = Student.objects.all().order_by('-created_at')
-
+    # pagination
     paginator = Paginator(students, 2)  # 2 students per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -29,7 +32,10 @@ def student_list(request):
     return render(
         request,
         'students/students_list.html',
-        {'page_obj': page_obj, 'query': query}
+        {'page_obj': page_obj,
+          'query': query,
+          'is_principal':is_principal
+          }
     )
 
 @login_required 
@@ -47,6 +53,8 @@ def add_student(request):
 
 @login_required
 def edit_student(request, student_id):
+    if not request.user.groups.filter(name="principal").exits(): # only pricipal can edit student
+        return redirect("students_list")
     student = get_object_or_404(Student, id=student_id)
 
     if request.method == "POST":
@@ -61,6 +69,8 @@ def edit_student(request, student_id):
 
 @login_required
 def delete_student(request, student_id):
+    if not request.user.groups.filter(name="principal").exits():# only principal can delete student
+        return redirect("students_list")
     student = get_object_or_404(Student, id=student_id)
     student.delete()
     return redirect("students_list")

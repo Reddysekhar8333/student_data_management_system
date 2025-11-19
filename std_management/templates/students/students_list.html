@@ -31,8 +31,13 @@
             <td>{{ student.branch }}</td>
             <td>{{ student.email }}</td>
             <td>
+                {% if is_principal %}
                 <a href="{% url 'edit_student' student.id %}" class="btn btn-primary btn-sm">Edit</a>
                 <a href="{% url 'delete_student' student.id %}" class="btn btn-danger btn-sm">Delete</a>
+                {% else %}
+                <span class="badge bg-secondary">View Only</span>
+                {% endif %}
+
             </td>
         </tr>
         {% empty %}
